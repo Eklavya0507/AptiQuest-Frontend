@@ -1,0 +1,11 @@
+{
+  "name":"AptiQuest — Learn. Play. Level Up.",
+  "short_name":"AptiQuest",
+  "description":"A gamified aptitude learning and brain training app",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#090e20",
+  "theme_color":"#090e20",
+  "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+}
