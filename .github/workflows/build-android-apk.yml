@@ -1,0 +1,73 @@
+name: Build Android APK - AptiQuest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-debug-apk:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java 21 for Capacitor 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform 35
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'platform-tools'
+
+      - name: Install npm packages
+        run: npm install --no-audit --no-fund
+
+      - name: Build self-contained web files for Android
+        env:
+          VITE_APP_TARGET: android
+        run: npm run build:android
+
+      - name: Create native Android project
+        run: npx cap add android
+
+      - name: Sync web assets
+        run: npx cap sync android
+
+      - name: Configure app launcher icon
+        shell: bash
+        run: |
+          python3 scripts/apply_android_icons.py
+          # Capacitor template includes default adaptive icons that otherwise override ours.
+          find android/app/src/main/res/mipmap-anydpi-v26 -type f -name 'ic_launcher*.xml' -delete 2>/dev/null || true
+
+      - name: Build installable debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK for sharing with friends
+        uses: actions/upload-artifact@v4
+        with:
+          name: AptiQuest-Installable-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
